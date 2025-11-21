@@ -122,7 +122,7 @@ async function createTareasCronograma(idCronograma, tareas) {
       
       const [result] = await connection.query(
         "INSERT INTO tarea_cronograma (id_cronograma_FK, descripcion, hora, minuto, meridiano, estado, project_id, `order`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [idCronograma, descripcion, hora, minuto, meridiano, 0, project_id, nextOrder]
+        [idCronograma, descripcion, hora, minuto, meridiano, 0, project_id ? project_id : null, nextOrder]
       );
       
       createdTareas.push({
