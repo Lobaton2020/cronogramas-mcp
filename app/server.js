@@ -7,7 +7,6 @@ import mysql from "mysql2/promise.js";
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import TOML from "@iarna/toml";
 import { logInfo, logError, logToolCall, setConsoleLogsEnabled } from "./logger.js";
 dotenv.config({ path: ".env" });
 
@@ -24,16 +23,6 @@ const dbConfig = {
 
 // Crear pool de conexiones
 const pool = mysql.createPool(dbConfig);
-
-// Función auxiliar para convertir JSON a TOML
-function jsonToToml(data) {
-  try {
-    return TOML.stringify(data);
-  } catch (error) {
-    logError("Error convirtiendo a TOML", error);
-    return JSON.stringify(data, null, 2);
-  }
-}
 
 // Función para obtener todos los cronogramas
 async function getCronogramas() {
@@ -664,13 +653,11 @@ ${projectsContext}`;
             }
 
             // Registrar la llamada a la herramienta
-            // Convertir resultado a TOML para respuesta más eficiente
-            const tomlResult = jsonToToml(toolResult);
             const response = {
               content: [
                 {
                   type: "text",
-                  text: tomlResult,
+                  text: JSON.stringify(toolResult, null, 2),
                 },
               ],
             };
