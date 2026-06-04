@@ -73,7 +73,7 @@ async function getTareasCronograma(idCronograma) {
 async function createCronograma(idUsuario = 1, fecha, titulo = null) {
   try {
     const connection = await pool.getConnection();
-    
+
     // Si no se proporciona título, generarlo automáticamente basado en la fecha
     let finalTitulo = titulo;
     if (!finalTitulo) {
@@ -85,13 +85,13 @@ async function createCronograma(idUsuario = 1, fecha, titulo = null) {
       const year = dateObj.getFullYear();
       finalTitulo = `Activities ${day} ${month} ${year}`;
     }
-    
+
     const [result] = await connection.query(
       "INSERT INTO cronograma (id_usuario_FK, titulo, fecha) VALUES (?, ?, ?)",
       [idUsuario, finalTitulo, fecha]
     );
     connection.release();
-    
+
     return {
       id_cronograma_PK: result.insertId,
       id_usuario_FK: idUsuario,
@@ -108,23 +108,23 @@ async function createTareasCronograma(idCronograma, tareas) {
   try {
     const connection = await pool.getConnection();
     const createdTareas = [];
-    
+
     // Obtener el máximo orden actual
     const [maxOrderResult] = await connection.query(
       "SELECT MAX(`order`) as maxOrder FROM tarea_cronograma WHERE id_cronograma_FK = ?",
       [idCronograma]
     );
     let nextOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
-    
+
     // Insertar cada tarea
     for (const tarea of tareas) {
       const { descripcion, hora = 0, minuto = 0, meridiano = "AM", project_id = null } = tarea;
-      
+
       const [result] = await connection.query(
         "INSERT INTO tarea_cronograma (id_cronograma_FK, descripcion, hora, minuto, meridiano, estado, project_id, `order`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         [idCronograma, descripcion, hora, minuto, meridiano, 0, project_id ? project_id : null, nextOrder]
       );
-      
+
       createdTareas.push({
         id_tarea_cronograma_PK: result.insertId,
         id_cronograma_FK: idCronograma,
@@ -136,10 +136,10 @@ async function createTareasCronograma(idCronograma, tareas) {
         project_id,
         order: nextOrder,
       });
-      
+
       nextOrder++;
     }
-    
+
     connection.release();
     return createdTareas;
   } catch (error) {
@@ -162,7 +162,7 @@ const server = new Server(
 
 // Manejador para listar tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  
+
   return {
     tools: [
       {
@@ -263,7 +263,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // Iniciar servidor HTTP
 async function main() {
   const app = express();
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 80;
 
   // Configurar flag de logs desde variable de entorno
   if (process.env.CONSOLE_LOGS === "false") {
@@ -321,7 +321,7 @@ async function main() {
   app.get("/tools", async (req, res) => {
     try {
       const projects = await getProjects();
-      const projectsContext = projects.length > 0 
+      const projectsContext = projects.length > 0
         ? `Proyectos disponibles:\n${projects.map(p => `- ID: ${p.id}, Nombre: ${p.name}, Descripción: ${p.descripcion || 'N/A'}`).join('\n')}`
         : "No hay proyectos disponibles en la base de datos.";
 
@@ -471,7 +471,7 @@ async function main() {
           }
 
           // Generar contexto con los proyectos disponibles
-          const projectsContext = projects.length > 0 
+          const projectsContext = projects.length > 0
             ? `Proyectos disponibles:\n${projects.map(p => `- ID: ${p.id}, Nombre: ${p.name}, Descripción: ${p.descripcion || 'N/A'}`).join('\n')}`
             : "No hay proyectos disponibles en la base de datos.";
 

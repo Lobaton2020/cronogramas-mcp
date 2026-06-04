@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cronogramas-mcp-config
+data:
+  APP_ENV: "production"
+  PORT: "80"
+  NODE_ENV: "production"
