@@ -18,11 +18,14 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          volumeMounts:
+            - name: env-file
+              mountPath: /app/.env
+              subPath: .env
+              readOnly: true
           envFrom:
             - configMapRef:
                 name: cronogramas-mcp-config
-            - secretRef:
-                name: tomanotas-secrets
           resources:
             requests:
               cpu: "100m"
@@ -42,6 +45,10 @@ spec:
               port: 80
             initialDelaySeconds: 5
             periodSeconds: 5
+      volumes:
+        - name: env-file
+          secret:
+            secretName: tomenotas-secrets
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
