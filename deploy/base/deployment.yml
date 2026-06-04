@@ -48,7 +48,7 @@ spec:
       volumes:
         - name: env-file
           secret:
-            secretName: tomenotas-secrets
+            secretName: tomanotas-secrets
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
