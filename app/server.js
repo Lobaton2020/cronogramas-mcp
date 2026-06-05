@@ -20,7 +20,11 @@ const dbConfig = {
   connectionLimit: 10,
   queueLimit: 0,
 };
-
+logInfo("Configuración de base de datos:", {
+  host: dbConfig.host,
+  user: dbConfig.user,
+  database: dbConfig.database,
+});
 // Crear pool de conexiones
 const pool = mysql.createPool(dbConfig);
 
