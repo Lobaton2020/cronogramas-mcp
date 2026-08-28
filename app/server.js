@@ -29,12 +29,27 @@ logInfo("Configuración de base de datos:", {
 const pool = mysql.createPool(dbConfig);
 
 // Función para obtener todos los cronogramas
-async function getCronogramas() {
+async function getCronogramas({ fecha_desde = null, fecha_hasta = null } = {}) {
   try {
     const connection = await pool.getConnection();
-    const [rows] = await connection.query(
-      "SELECT * FROM cronograma ORDER BY fecha DESC limit 15"
-    );
+    let query = "SELECT * FROM cronograma";
+    const conditions = [];
+    const params = [];
+
+    if (fecha_desde) {
+      conditions.push("fecha >= ?");
+      params.push(fecha_desde);
+    }
+    if (fecha_hasta) {
+      conditions.push("fecha <= ?");
+      params.push(fecha_hasta);
+    }
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+    query += " ORDER BY fecha DESC LIMIT 15";
+
+    const [rows] = await connection.query(query, params);
     connection.release();
     return rows;
   } catch (error) {
@@ -171,10 +186,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "get_cronogramas",
-        description: "Obtiene todos los cronogramas de la base de datos",
+        description: "Obtiene todos los cronogramas de la base de datos, opcionalmente filtrados por rango de fechas",
         inputSchema: {
           type: "object",
-          properties: {},
+          properties: {
+            fecha_desde: {
+              type: "string",
+              description: "Fecha inicio del filtro en formato ISO (YYYY-MM-DD o YYYY-MM-DD HH:mm:ss)",
+            },
+            fecha_hasta: {
+              type: "string",
+              description: "Fecha fin del filtro en formato ISO (YYYY-MM-DD o YYYY-MM-DD HH:mm:ss)",
+            },
+          },
           required: [],
         },
       },
@@ -212,7 +236,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     switch (request.params.name) {
       case "get_cronogramas":
-        result = await getCronogramas();
+        result = await getCronogramas({
+          fecha_desde: request.params.arguments?.fecha_desde,
+          fecha_hasta: request.params.arguments?.fecha_hasta,
+        });
         return {
           content: [
             {
@@ -333,10 +360,19 @@ async function main() {
         tools: [
           {
             name: "get_cronogramas",
-            description: "Obtiene todos los cronogramas de la base de datos",
+            description: "Obtiene todos los cronogramas de la base de datos, opcionalmente filtrados por rango de fechas",
             inputSchema: {
               type: "object",
-              properties: {},
+              properties: {
+                fecha_desde: {
+                  type: "string",
+                  description: "Fecha inicio del filtro en formato ISO (YYYY-MM-DD o YYYY-MM-DD HH:mm:ss)",
+                },
+                fecha_hasta: {
+                  type: "string",
+                  description: "Fecha fin del filtro en formato ISO (YYYY-MM-DD o YYYY-MM-DD HH:mm:ss)",
+                },
+              },
               required: [],
               additionalProperties: false,
             },
@@ -522,10 +558,19 @@ ${projectsContext}`;
             tools: [
               {
                 name: "get_cronogramas",
-                description: "Obtiene todos los cronogramas de la base de datos",
+                description: "Obtiene todos los cronogramas de la base de datos, opcionalmente filtrados por rango de fechas",
                 inputSchema: {
                   type: "object",
-                  properties: {},
+                  properties: {
+                    fecha_desde: {
+                      type: "string",
+                      description: "Fecha inicio del filtro en formato ISO (YYYY-MM-DD o YYYY-MM-DD HH:mm:ss)",
+                    },
+                    fecha_hasta: {
+                      type: "string",
+                      description: "Fecha fin del filtro en formato ISO (YYYY-MM-DD o YYYY-MM-DD HH:mm:ss)",
+                    },
+                  },
                   required: [],
                   additionalProperties: false,
                 },
@@ -635,7 +680,10 @@ ${projectsContext}`;
           let toolResult;
           try {
             if (toolName === "get_cronogramas") {
-              toolResult = await getCronogramas();
+              toolResult = await getCronogramas({
+                fecha_desde: toolArgs.fecha_desde,
+                fecha_hasta: toolArgs.fecha_hasta,
+              });
             } else if (toolName === "get_projects") {
               toolResult = await getProjects();
             } else if (toolName === "get_tareas_cronograma") {
@@ -706,7 +754,8 @@ ${projectsContext}`;
   // Rutas específicas para cada tool (para pruebas directas)
   app.get("/api/cronogramas", async (req, res) => {
     try {
-      const result = await getCronogramas();
+      const { fecha_desde, fecha_hasta } = req.query;
+      const result = await getCronogramas({ fecha_desde, fecha_hasta });
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
